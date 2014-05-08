@@ -55,12 +55,12 @@ if __name__ == '__main__':
         logpost = pickle.load(inp)
         print 'Loaded pickled posterior'
         sys.__stdout__.flush()
-    finally:
-        inp.close()
     except:
         logpost = pos.Posterior(coincs, bgs, args.snr_min, N=args.nfore)
         print 'Generated new posterior'
         sys.__stdout__.flush()
+    finally:
+        inp.close()
 
     try:
         out = bz2.BZ2File(op.join(args.outdir, 'temp_posterior.pkl.bz2'), 'w')
@@ -90,12 +90,12 @@ if __name__ == '__main__':
 
         print 'Loaded old chain, size = ', sampler.chain.shape[1], ' steps'
         sys.__stdout__.flush()
-    finally:
-        cin.close()
-        lin.close()
     except:
         print 'Starting fresh chain.'
         sys.__stdout__.flush()
+    finally:
+        cin.close()
+        lin.close()
 
     while True:
         if sampler.chain.shape[1] > 0:
