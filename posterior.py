@@ -27,11 +27,8 @@ class Posterior(object):
         if self.uinds.shape[0] >= (self.foreground.xbins.shape[0]-1)*(self.foreground.ybins.shape[0]-1):
             raise ValueError('too many xy indices')
 
-        bgxinds = np.searchsorted(self.foreground.xbins, bgs[0])-1
-        bgyinds = np.searchsorted(self.foreground.ybins, bgs[1])-1
-
-        self.all_bgxcounts = np.bincount(bgxinds, minlength=self.foreground.xbins.shape[0]-1)
-        self.all_bgycounts = np.bincount(bgyinds, minlength=self.foreground.ybins.shape[0]-1)
+        self.all_bgxcounts, _ = np.histogram(bgs[0], bins=self.foreground.xbins)
+        self.all_bgycounts, _ = np.histogram(bgs[1], bins=self..foreground.ybins)
 
         self.bgxcounts = self.all_bgxcounts[self.uxinds]
         self.bgycounts = self.all_bgycounts[self.uyinds]
