@@ -1,0 +1,19 @@
+trigger_path = /home/yiminghu/RatesNSignificance/Multiple
+output_path_base = /home/w-farr/Hamlet/runs/Multiple
+exec_path = /home/w-farr/src/LIGOHamlet
+
+seed = 123456
+output_path = $(output_path_base)/$(seed)
+
+Universe = vanilla
+Executable = $(exec_path)/run.py
+
+Getenv = True
+
+Log = $(output_path)/rates.log
+Output = $(output_path)/rates.out
+Error = $(output_path)/rates.err
+
+Arguments = "--coincs $(trigger_path)/CoincTriggers_seed$(seed).txt --trigs1 $(trigger_path)/Triggers1_seed$(seed).txt --trigs2 $(trigger_path)/Triggers2_seed$(seed).txt --outdir $(output_path)"
+
+Queue
