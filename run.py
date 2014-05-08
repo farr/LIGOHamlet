@@ -52,18 +52,19 @@ if __name__ == '__main__':
 
     try:
         inp = bz2.BZ2File(op.join(args.outdir, 'posterior.pkl.bz2'), 'r')
-        logpost = pickle.load(inp)
-        print 'Loaded pickled posterior'
-        sys.__stdout__.flush()
+        try:
+            logpost = pickle.load(inp)
+            print 'Loaded pickled posterior'
+            sys.__stdout__.flush()
+        finally:
+            inp.close()
     except:
         logpost = pos.Posterior(coincs, bgs, args.snr_min, N=args.nfore)
         print 'Generated new posterior'
         sys.__stdout__.flush()
-    finally:
-        inp.close()
 
+    out = bz2.BZ2File(op.join(args.outdir, 'temp_posterior.pkl.bz2'), 'w')
     try:
-        out = bz2.BZ2File(op.join(args.outdir, 'temp_posterior.pkl.bz2'), 'w')
         pickle.dump(logpost, out)
     finally:
         out.close()
@@ -82,20 +83,22 @@ if __name__ == '__main__':
 
     ps = np.exp(np.log(p0) + 1e-3*np.random.randn(args.nwalkers, logpost.nparams))
 
+    cin = bz2.BZ2File(op.join(args.outdir, 'chain.npy.bz2'), 'r')
     try:
-        cin = bz2.BZ2File(op.join(args.outdir, 'chain.npy.bz2'), 'r')
         lin = bz2.BZ2File(op.join(args.outdir, 'lnprob.npy.bz2'), 'r')
-        sampler._chain = np.load(cin)
-        sampler._lnprob = np.load(lin)
+        try:
+            sampler._chain = np.load(cin)
+            sampler._lnprob = np.load(lin)
 
-        print 'Loaded old chain, size = ', sampler.chain.shape[1], ' steps'
-        sys.__stdout__.flush()
+            print 'Loaded old chain, size = ', sampler.chain.shape[1], ' steps'
+            sys.__stdout__.flush()
+        finally:
+            lin.close()
     except:
         print 'Starting fresh chain.'
         sys.__stdout__.flush()
     finally:
         cin.close()
-        lin.close()
 
     while True:
         if sampler.chain.shape[1] > 0:
@@ -103,16 +106,16 @@ if __name__ == '__main__':
         else:
             sampler.run_mcmc(ps, args.nstep, thin=args.nthin)
 
+        out = bz2.BZ2File(op.join(args.outdir, 'temp_chain.npy.bz2'), 'w')
         try:
-            out = bz2.BZ2File(op.join(args.outdir, 'temp_chain.npy.bz2'), 'w')
             np.save(out, sampler.chain)
         finally:
             out.close()
         os.rename(op.join(args.outdir, 'temp_chain.npy.bz2'),
                   op.join(args.outdir, 'chain.npy.bz2'))
 
+        out = bz2.BZ2File(op.join(args.outdir, 'temp_lnprob.npy.bz2'), 'w')
         try:
-            out = bz2.BZ2File(op.join(args.outdir, 'temp_lnprob.npy.bz2'), 'w')
             np.save(out, sampler.lnprobability)
         finally:
             out.close()
