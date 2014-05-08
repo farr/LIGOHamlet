@@ -1,8 +1,10 @@
-trigger_path = /home/yiminghu/RatesNSignificance/Multiple
-output_path_base = /home/w-farr/Hamlet/runs/Multiple
+seed = @seed@
+multiple_name = @multiple_name@
+
+trigger_path = /home/yiminghu/RatesNSignificance/$(multiple_name)
+output_path_base = /home/w-farr/Hamlet/runs/$(multiple_name)
 exec_path = /home/w-farr/src/LIGOHamlet
 
-seed = 66119
 output_path = $(output_path_base)/$(seed)
 
 Universe = vanilla
