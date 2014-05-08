@@ -2,7 +2,7 @@ trigger_path = /home/yiminghu/RatesNSignificance/Multiple
 output_path_base = /home/w-farr/Hamlet/runs/Multiple
 exec_path = /home/w-farr/src/LIGOHamlet
 
-seed = 123456
+seed = 66119
 output_path = $(output_path_base)/$(seed)
 
 Universe = vanilla
