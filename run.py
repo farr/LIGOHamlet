@@ -83,22 +83,23 @@ if __name__ == '__main__':
 
     ps = np.exp(np.log(p0) + 1e-3*np.random.randn(args.nwalkers, logpost.nparams))
 
-    cin = bz2.BZ2File(op.join(args.outdir, 'chain.npy.bz2'), 'r')
     try:
-        lin = bz2.BZ2File(op.join(args.outdir, 'lnprob.npy.bz2'), 'r')
+        cin = bz2.BZ2File(op.join(args.outdir, 'chain.npy.bz2'), 'r')
         try:
-            sampler._chain = np.load(cin)
-            sampler._lnprob = np.load(lin)
+            lin = bz2.BZ2File(op.join(args.outdir, 'lnprob.npy.bz2'), 'r')
+            try:
+                sampler._chain = np.load(cin)
+                sampler._lnprob = np.load(lin)
 
-            print 'Loaded old chain, size = ', sampler.chain.shape[1], ' steps'
-            sys.__stdout__.flush()
+                print 'Loaded old chain, size = ', sampler.chain.shape[1], ' steps'
+                sys.__stdout__.flush()
+            finally:
+                lin.close()
         finally:
-            lin.close()
+            cin.close()
     except:
         print 'Starting fresh chain.'
         sys.__stdout__.flush()
-    finally:
-        cin.close()
 
     while True:
         if sampler.chain.shape[1] > 0:
