@@ -28,7 +28,7 @@ class Posterior(object):
             raise ValueError('too many xy indices')
 
         self.all_bgxcounts, _ = np.histogram(bgs[0], bins=self.foreground.xbins)
-        self.all_bgycounts, _ = np.histogram(bgs[1], bins=self..foreground.ybins)
+        self.all_bgycounts, _ = np.histogram(bgs[1], bins=self.foreground.ybins)
 
         self.bgxcounts = self.all_bgxcounts[self.uxinds]
         self.bgycounts = self.all_bgycounts[self.uyinds]
