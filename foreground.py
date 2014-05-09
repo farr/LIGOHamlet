@@ -67,6 +67,10 @@ class Foreground(object):
         self.ybins = ybins
         self.counts = counts
 
+        dxs = np.diff(self.xbins)
+        dys = np.diff(self.ybins)
+        self.mean_density = (counts+0.5)/np.sum(counts + 0.5)/dxs.reshape((-1, 1))/dys.reshape((1, -1))
+
     def get_counts(self, pts):
         pts = np.atleast_2d(pts)
 
@@ -74,5 +78,4 @@ class Foreground(object):
         jj = np.searchsorted(self.ybins, pts[:,1])-1
 
         return ii, jj, self.counts[ii, jj]
-
     
