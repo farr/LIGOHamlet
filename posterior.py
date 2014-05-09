@@ -3,11 +3,15 @@ import numpy as np
 import scipy.optimize as so
 
 class Posterior(object):
-    def __init__(self, coincs, bgs, snr_min, N=10000000):
+    def __init__(self, coincs, bgs, snr_min, N=10000000, foreground=None):
         self.snr_min = snr_min
         self.coincs = coincs
         self.bgs = bgs
-        self.foreground = fg.Foreground(snr_min, N)
+
+        if foreground is None:
+            self.foreground = fg.Foreground(snr_min, N)
+        else:
+            self.foreground = foreground
 
         self.xinds = np.searchsorted(self.foreground.xbins, coincs[:,0])-1
         self.yinds = np.searchsorted(self.foreground.ybins, coincs[:,1])-1
@@ -53,6 +57,23 @@ class Posterior(object):
     def to_params(self, p):
         return np.atleast_1d(p).view(self.dtype).squeeze()
 
+    def rhof(self, p):
+        p = self.to_params(p)
+
+        rhofs = np.zeros((self.foreground.xbins.shape[0]-1, self.foreground.ybins.shape[0]-1))
+        rhofs[self.uinds[:,0], self.uinds[:,1]] = p['fg_ps'] # Only fill in the relevant bins
+        
+        return rhofs
+
+    def rhob(self, p):
+        p = self.to_params(p)
+
+        rhobs = np.zeros((self.foreground.xbins.shape[0]-1, self.foreground.ybins.shape[0]-1))
+        rhobs[self.uxinds, :] = p['bgx_ps'].reshape((-1, 1))
+        rhobs[:,self.uyinds] *= p['bgy_ps'].reshape((1, -1))
+
+        return rhobs
+
     def log_prior(self, p):
         p = self.to_params(p)
 
@@ -95,13 +116,8 @@ class Posterior(object):
 
         ll += np.sum(self.counts*np.log(p['fg_ps'])) + self.nfg_rem*np.log1p(-np.sum(p['fg_ps']))
         
-        rhofs = np.zeros((self.foreground.xbins.shape[0]-1, self.foreground.ybins.shape[0]-1))
-        rhobs = rhofs.copy()
-
-        rhofs[self.uinds[:,0], self.uinds[:,1]] = p['fg_ps']
-
-        rhobs[self.uxinds, :] = p['bgx_ps'].reshape((-1, 1))
-        rhobs[:,self.uyinds] *= p['bgy_ps'].reshape((1, -1))
+        rhofs = self.rhof(p)
+        rhobs = self.rhob(p)
 
         ll += np.sum(np.logaddexp(np.log(p['Rf']) + np.log(rhofs[self.xinds, self.yinds]),
                                   np.log(p['Rb']) + np.log(rhobs[self.xinds, self.yinds])))
@@ -131,3 +147,19 @@ class Posterior(object):
         ps['bgy_ps'] = (self.bgycounts + 0.5)/nby
 
         return ps.reshape((1,)).view(float).reshape((-1,))
+
+    def pfores(self, p):
+        p = self.to_params(p)
+
+        rhofs = self.rhof(p)
+        rhobs = self.rhob(p)
+
+        return p['Rf']*rhofs[self.xinds, self.yinds]/(p['Rf']*rhofs[self.xinds, self.yinds] + p['Rb']*rhobs[self.xinds, self.yinds])
+
+    def pbacks(self, p):
+        p = self.to_params(p)
+
+        rhofs = self.rhof(p)
+        rhobs = self.rhob(p)
+
+        return p['Rb']*rhobs[self.xinds, self.yinds]/(p['Rf']*rhofs[self.xinds, self.yinds] + p['Rb']*rhobs[self.xinds, self.yinds])
