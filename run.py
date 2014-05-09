@@ -130,6 +130,9 @@ if __name__ == '__main__':
             sys.__stdout__.flush()
             continue
         elif tchain.shape[0]*tchain.shape[1] > args.neff:
+            print 'After ', sampler.chain.shape[1], ' thinned ensembles, ', tchain.shape[1], ' independent ensembles'
+            print 'Stopping with ', tchain.shape[1]*tchain.shape[0], ' independent samples'
+            sys.__stdout__.flush()
             break
         else:
             print 'After ', sampler.chain.shape[1], ' thinned ensembles, ', tchain.shape[1], ' independent ensembles'
