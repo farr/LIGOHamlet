@@ -50,7 +50,7 @@ def snr_histogram(snr_thresh, N):
     if N < 100000:
         raise ValueError('you won\'t get far with such a small N')
     
-    Ns = linspace(0, N, N/100000)
+    Ns = np.linspace(0, N, N/100000)
     Ndraws = np.diff(Ns)
 
     xbins = np.array([])
