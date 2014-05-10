@@ -47,15 +47,49 @@ def snr_bins(snr_max, snr_thresh, N):
     return np.array(bins)
 
 def snr_histogram(snr_thresh, N):
-    snrs = draw_snrs(snr_thresh, N)
+    if N < 100000:
+        raise ValueError('you won\'t get far with such a small N')
+    
+    Ns = linspace(0, N, N/100000)
+    Ndraws = np.diff(Ns)
 
-    xmax = np.max(snrs[:,0])
-    ymax = np.max(snrs[:,1])
+    xbins = np.array([])
+    ybins = np.array([])
+    counts = np.array([[0]], dtype=np.int)
 
-    xbins = snr_bins(xmax, snr_thresh, N)
-    ybins = snr_bins(ymax, snr_thresh, N)
+    for n in Ndraws:
+        snrs = draw_snrs(snr_thresh, n)
 
-    counts, xbins, ybins = np.histogram2d(snrs[:,0], snrs[:,1], bins=[xbins, ybins])
+        xmax = np.max(snrs[:,0])
+        ymax = np.max(snrs[:,1])
+
+        xbinsn = snr_bins(xmax, snr_thresh, N)
+        ybinsn = snr_bins(ymax, snr_thresh, N)
+
+        countsn, xbinsn, ybinsn = np.histogram2d(snrs[:,0], snrs[:,1], bins=[xbinsn, ybinsn])
+
+        xbins, ybins, counts = combine_histograms(xbins, ybins, counts,
+                                                  xbinsn, ybinsn, countsn)
+
+    return xbins, ybins, counts
+
+def combine_histograms(xbins1, ybins1, counts1, xbins2, ybins2, counts2):
+    imax = np.max(counts1.shape[0], counts2.shape[0])
+    jmax = np.max(counts1.shape[1], counts2.shape[1])
+
+    counts = np.zeros((imax, jmax), dtype=np.int)
+    counts[:counts1.shape[0], :counts1.shape[1]] += counts1
+    counts[:counts2.shape[0], :counts2.shape[2]] += counts2
+
+    if xbins1.shape[0] > xbins2.shape[0]:
+        xbins = xbins1
+    else:
+        xbins = xbins2
+
+    if ybins1.shape[0] > ybins2.shape[0]:
+        ybins = ybins1
+    else:
+        ybins = ybins2
 
     return xbins, ybins, counts
 
