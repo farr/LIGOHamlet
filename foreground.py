@@ -50,12 +50,12 @@ def snr_histogram(snr_thresh, N):
     if N < 100000:
         raise ValueError('you won\'t get far with such a small N')
     
-    Ns = np.linspace(0, N, N/100000)
+    Ns = np.round(np.linspace(0, N, N/100000)).astype(np.int)
     Ndraws = np.diff(Ns)
 
-    xbins = np.array([])
-    ybins = np.array([])
-    counts = np.array([[0]], dtype=np.int)
+    xbins = None
+    ybins = None
+    counts = None
 
     for n in Ndraws:
         snrs = draw_snrs(snr_thresh, n)
@@ -74,24 +74,29 @@ def snr_histogram(snr_thresh, N):
     return xbins, ybins, counts
 
 def combine_histograms(xbins1, ybins1, counts1, xbins2, ybins2, counts2):
-    imax = np.max(counts1.shape[0], counts2.shape[0])
-    jmax = np.max(counts1.shape[1], counts2.shape[1])
-
-    counts = np.zeros((imax, jmax), dtype=np.int)
-    counts[:counts1.shape[0], :counts1.shape[1]] += counts1
-    counts[:counts2.shape[0], :counts2.shape[2]] += counts2
-
-    if xbins1.shape[0] > xbins2.shape[0]:
-        xbins = xbins1
+    if xbins1 is None or ybins1 is None or counts1 is None:
+        return xbins2, ybins2, counts2
+    elif xbins2 is None or ybins2 is None or counts2 is None:
+        return xbins1, ybins1, counts1
     else:
-        xbins = xbins2
+        imax = max(counts1.shape[0], counts2.shape[0])
+        jmax = max(counts1.shape[1], counts2.shape[1])
 
-    if ybins1.shape[0] > ybins2.shape[0]:
-        ybins = ybins1
-    else:
-        ybins = ybins2
+        counts = np.zeros((imax, jmax), dtype=np.int)
+        counts[:counts1.shape[0], :counts1.shape[1]] += counts1
+        counts[:counts2.shape[0], :counts2.shape[1]] += counts2
 
-    return xbins, ybins, counts
+        if xbins1.shape[0] > xbins2.shape[0]:
+            xbins = xbins1
+        else:
+            xbins = xbins2
+
+        if ybins1.shape[0] > ybins2.shape[0]:
+            ybins = ybins1
+        else:
+            ybins = ybins2
+
+        return xbins, ybins, counts
 
 class Foreground(object):
     def __init__(self, snr_thresh, N):
