@@ -10,7 +10,6 @@ import plotutils.autocorr as ac
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--overwrite', default=False, help='overwrite existing tchain files')
     parser.add_argument('--dir', default='.', help='containing directory')
 
     args = parser.parse_args()
@@ -33,3 +32,5 @@ if __name__ == '__main__':
         except:
             print 'Could not complete thinning for ', chainfile
             continue
+
+        print 'Thinned ', chainfile
