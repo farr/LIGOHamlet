@@ -59,17 +59,11 @@ if __name__ == '__main__':
     
     pp.rcParams['text.usetex'] = True
 
-    inp = bz2.BZ2File(op.join(args.dir, 'chain.npy.bz2'), 'r')
+    inp = bz2.BZ2File(op.join(args.dir, 'tchain.npy.bz2'), 'r')
     try:
-        chain = np.load(inp)
+        tchain = np.load(inp)
     finally:
         inp.close()
-
-    tchain = ac.emcee_thinned_chain(chain)
-
-    if tchain is None:
-        print 'Could not post-process'
-        exit(1)
 
     inp = bz2.BZ2File(op.join(args.dir, 'posterior.pkl.bz2'), 'r')
     try:
