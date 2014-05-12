@@ -1,0 +1,15 @@
+exec_path = /home/w-farr/src/LIGOHamlet
+thin_path = /home/w-farr/Hamlet/runs
+
+Universe = vanilla
+Executable = $(exec_path)/thin.py
+
+Getenv = True
+
+Log = $(thin_path)/thin.log
+Output = $(thin_path)/thin.out
+Error = $(thin_path)/thin.err
+
+Arguments = "--dir $(thin_path)"
+
+Queue
