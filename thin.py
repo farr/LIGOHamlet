@@ -39,7 +39,10 @@ if __name__ == '__main__':
                     tempout.close()
             except:
                 print 'Could not thin ', chainfile
+                sys.stdout.flush()
                 continue
             print 'Thinned ', chainfile
+            sys.stdout.flush()
         else:
             print 'Skipped ', chainfile, ' due to previous thinning'
+            sys.stdout.flush()
