@@ -48,7 +48,7 @@ def pback_plot(chain, logpost, outdir):
 def log_odds_signal(tchain, rhigh=100.0):
     kde = ss.gaussian_kde(np.sqrt(tchain[:,:,0].flatten()/rhigh))
 
-    return kde(0)
+    return -np.log(kde(0))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
