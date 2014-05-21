@@ -4,7 +4,7 @@ import numpy as np
 def draw_normalised_snrs():
     r"""Returns ``(rho_H, rho_L)``, with :math:`0 \leq \rho \leq 1` for the
     SNR in Hanford and Livingston drawn fairly over sky positions,
-    time, and polarisation.
+    time, polarisation, and inclination.
 
     """
 
@@ -15,13 +15,20 @@ def draw_normalised_snrs():
     ra = np.random.uniform(low=0.0, high=2.0*np.pi)
     dec = np.arcsin(np.random.uniform(low=-1.0, high=1.0))
     psi = np.random.uniform(low=0.0, high=2.0*np.pi)
+    cos_i = np.random.uniform(low=-1.0, high=1.0)
 
+    pfac = 0.5*(1.0+cos_i*cos_i)
+    cfac = cos_i
+
+    pfac2 = pfac*pfac
+    cfac2 = cfac*cfac
+    
     fpl, fcl = lal.ComputeDetAMResponse(lal.lalCachedDetectors[LLO_index].response,
                                         ra, dec, psi, gmst)
     fph, fch = lal.ComputeDetAMResponse(lal.lalCachedDetectors[LHO_index].response,
                                         ra, dec, psi, gmst)
 
-    return np.sqrt(fph*fph + fch*fch), np.sqrt(fpl*fpl + fcl*fcl)
+    return np.sqrt(fph*fph*pfac2 + fch*fch*cfac2), np.sqrt(fpl*fpl*pfac2 + fcl*fcl*cfac2)
 
 def draw_snrs(snr_thresh, nsnr):
     """Returns an array of shape ``(N, 2)`` giving the SNR in H and L for
