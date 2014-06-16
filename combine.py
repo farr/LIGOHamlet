@@ -39,18 +39,21 @@ if __name__ == '__main__':
                 print 'Couldn\'t process ', subdir
                 continue
 
-
     plt.figure(1)
     plt.xlabel(r'$R_f$')
     plt.ylabel(r'$p\left( R_f \right)$')
     plt.savefig(op.join(args.dir, 'fore.pdf'))
+    plt.savefig(op.join(args.dir, 'fore.png'))
 
     plt.figure(2)
     plt.xlabel(r'$R_b$')
     plt.ylabel(r'$p\left( R_b \right)$')
     plt.savefig(op.join(args.dir, 'back.pdf'))
+    plt.savefig(op.join(args.dir, 'back.png'))
 
     plt.figure()
     plt.plot(log_bfs, '*k')
+    plt.axhline(15.06) # 5-sigma
     plt.ylabel(r'$\ln B_{s,n}$')
     plt.savefig(op.join(args.dir, 'bf.pdf'))
+    plt.savefig(op.join(args.dir, 'bf.png'))

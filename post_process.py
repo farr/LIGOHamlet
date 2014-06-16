@@ -18,6 +18,8 @@ def triangle_plot(chain, outdir):
     triangle.corner(fchain[:,:2], labels=[r'$R_f$', r'$R_b$'], quantiles=[0.05, 0.95])
 
     pp.savefig(op.join(outdir, 'rates.pdf'))
+    pp.savefig(op.join(outdir, 'rates.png'))
+
 
 def pback_plot(chain, logpost, outdir):
     pbacks = []
@@ -44,6 +46,7 @@ def pback_plot(chain, logpost, outdir):
     pp.ylabel(r'$p(\mathrm{background})$')
 
     pp.savefig(op.join(outdir, 'pbacks.pdf'))
+    pp.savefig(op.join(outdir, 'pbacks.png'))
 
 def log_odds_signal(tchain, rhigh=100.0):
     kde = ss.gaussian_kde(np.sqrt(tchain[:,:,0].flatten()/rhigh))
