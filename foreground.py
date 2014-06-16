@@ -115,7 +115,12 @@ class Foreground(object):
 
         dxs = np.diff(self.xbins)
         dys = np.diff(self.ybins)
-        self.mean_density = (counts+0.5)/np.sum(counts + 0.5)/dxs.reshape((-1, 1))/dys.reshape((1, -1))
+
+        areas = np.outer(dxs, dys)
+        alphas = areas.copy()
+        alphas *= 0.5*alphas.shape[0]*alphas.shape[1]/np.sum(alphas)
+
+        self.mean_density = (counts+alphas)/np.sum(counts + alphas)/dxs.reshape((-1, 1))/dys.reshape((1, -1))
 
     def get_counts(self, pts):
         pts = np.atleast_2d(pts)

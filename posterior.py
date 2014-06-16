@@ -42,6 +42,28 @@ class Posterior(object):
         self.nbgx_rem = bgs[0].shape[0] - np.sum(self.bgxcounts)
         self.nbgy_rem = bgs[1].shape[0] - np.sum(self.bgycounts)
 
+        dx = np.diff(self.foreground.xbins)
+        dy = np.diff(self.foreground.ybins)
+
+        alphas = np.outer(dx, dy)
+        alphas *= 0.5*dx.shape[0]*dy.shape[0]/np.sum(alphas)
+
+        self.alphas = alphas[self.uinds[:,0], self.uinds[:,1]]
+        self.alphas_rem = 0.5*dx.shape[0]*dy.shape[0] - np.sum(self.alphas)
+
+        bgx_alphas = dx.copy()
+        bgx_alphas *= 0.5*dx.shape[0]/np.sum(bgx_alphas)
+
+        bgy_alphas = dy.copy()
+        bgy_alphas *= 0.5*dy.shape[0]/np.sum(bgy_alphas)
+
+        self.bgx_alphas = bgx_alphas[self.uxinds]
+        self.bgx_alphas_rem = 0.5*dx.shape[0] - np.sum(self.bgx_alphas)
+
+        self.bgy_alphas = bgy_alphas[self.uyinds]
+        self.bgy_alphas_rem = 0.5*dy.shape[0] - np.sum(self.bgy_alphas)
+        
+
     @property
     def nparams(self):
         return 2 + self.uxinds.shape[0] + self.uyinds.shape[0] + self.uinds.shape[0]
@@ -96,14 +118,13 @@ class Posterior(object):
         if np.sum(p['bgy_ps']) > 1.0:
             return np.NINF
 
-        return -0.5*(np.sum(np.log(p['fg_ps'])) +
-                     np.sum(np.log(p['bgx_ps'])) +
-                     np.sum(np.log(p['bgy_ps'])) +
-                     np.log1p(-np.sum(p['fg_ps'])) +
-                     np.log1p(-np.sum(p['bgx_ps'])) +
-                     np.log1p(-np.sum(p['bgy_ps'])) +
-                     np.log(p['Rf']) +
-                     np.log(p['Rb']))
+        return np.sum((self.alphas - 1)*np.log(p['fg_ps'])) + \
+            np.sum((self.bgx_alphas - 1)*np.log(p['bgx_ps'])) + \
+            np.sum((self.bgy_alphas - 1)*np.log(p['bgy_ps'])) + \
+            (self.alphas_rem-1)*np.log1p(-np.sum(p['fg_ps'])) + \
+            (self.bgx_alphas_rem-1)*np.log1p(-np.sum(p['bgx_ps'])) + \
+            (self.bgy_alphas_rem-1)*np.log1p(-np.sum(p['bgy_ps'])) + \
+            -0.5*(np.log(p['Rf']) + np.log(p['Rb']))
 
     def log_likelihood(self, p):
         p = self.to_params(p)
@@ -136,15 +157,15 @@ class Posterior(object):
             return lp + self.log_likelihood(p)
 
     def params_guess(self):
-        nf = np.sum(self.foreground.counts + 0.5)
-        nbx = np.sum(self.all_bgxcounts + 0.5)
-        nby = np.sum(self.all_bgycounts + 0.5)
+        nf = np.sum(self.foreground.counts) + np.sum(self.alphas) + self.alphas_rem
+        nbx = np.sum(self.all_bgxcounts) + np.sum(self.bgx_alphas) + self.bgx_alphas_rem
+        nby = np.sum(self.all_bgycounts) + np.sum(self.bgy_alphas) + self.bgy_alphas_rem
 
         ps = self.to_params(np.zeros(self.nparams))
 
-        ps['fg_ps'] = (self.counts + 0.5)/nf
-        ps['bgx_ps'] = (self.bgxcounts + 0.5)/nbx
-        ps['bgy_ps'] = (self.bgycounts + 0.5)/nby
+        ps['fg_ps'] = (self.counts + self.alphas)/nf
+        ps['bgx_ps'] = (self.bgxcounts + self.bgx_alphas)/nbx
+        ps['bgy_ps'] = (self.bgycounts + self.bgy_alphas)/nby
 
         return ps.reshape((1,)).view(float).reshape((-1,))
 
