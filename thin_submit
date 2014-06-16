@@ -10,6 +10,6 @@ Log = $(thin_path)/thin.log
 Output = $(thin_path)/thin.out
 Error = $(thin_path)/thin.err
 
-Arguments = "--dir $(thin_path)"
+Arguments = "--globdir $(thin_path)/*/*"
 
 Queue
