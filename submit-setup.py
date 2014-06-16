@@ -26,18 +26,18 @@ Arguments = "--coincs $(trigger_path)/CoincTriggers_seed$(seed).txt --trigs1 $(t
 Queue
 """
 
-if __name__ == __main__:
+if __name__ == '__main__':
     for iname in range(1, 15):
         if iname == 1:
             name = 'Multiple'
         else:
-            name = '{:d}Multiple'.format(iname)
+            name = '{0:d}Multiple'.format(iname)
 
         for j in range(10):
             seed = np.random.randint(100000)
 
             opath = '/home/w-farr/Hamlet/runs/{name:s}/{seed:d}'.format(name=name, seed=seed)
 
-            os.path.makedirs(opath)
+            os.makedirs(opath)
             with open(os.path.join(opath, 'submit'), 'w') as out:
                 out.write(submit_template.format(seed=seed, name=name))
