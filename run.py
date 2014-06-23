@@ -45,6 +45,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    nstep_thin = args.nstep / args.nthin
+
     ctrig, trig1, trig2 = d.process_coinc_triggers(args.coincs, args.trigs1, args.trigs2)
     
     coincs = np.column_stack((ctrig['SNR1'], ctrig['SNR2']))
@@ -62,6 +64,25 @@ if __name__ == '__main__':
         logpost = pos.Posterior(coincs, bgs, args.snr_min, N=args.nfore)
         print 'Generated new posterior'
         sys.__stdout__.flush()
+
+    try:
+        inp = open(op.join(args.outdir, 'thin.txt'), 'r')
+        try:
+            thin = int(inp.readline())
+            print 'Loaded thin parameter = ', thin
+            sys.__stdout__.flush()
+        finally:
+            inp.close()
+    except:
+        thin = args.thin
+        print 'Could not load thin parameter, using ', thin
+        sys.__stdout__.flush()
+
+    out = open(op.join(args.outdir, 'thin.txt'), 'w')
+    try:
+        out.write('{0:d}\n'.format(thin))
+    finally:
+        out.close()
 
     out = bz2.BZ2File(op.join(args.outdir, 'temp_posterior.pkl.bz2'), 'w')
     try:
@@ -103,9 +124,9 @@ if __name__ == '__main__':
 
     while True:
         if sampler.chain.shape[1] > 0:
-            sampler.run_mcmc(sampler.chain[:,-1,:], args.nstep, thin=args.nthin)
+            sampler.run_mcmc(sampler.chain[:,-1,:], nstep_thin*thin, thin=thin)
         else:
-            sampler.run_mcmc(ps, args.nstep, thin=args.nthin)
+            sampler.run_mcmc(ps, nstep_thin*thin, thin=thin)
 
         out = bz2.BZ2File(op.join(args.outdir, 'temp_chain.npy.bz2'), 'w')
         try:
@@ -138,3 +159,17 @@ if __name__ == '__main__':
             print 'After ', sampler.chain.shape[1], ' thinned ensembles, ', tchain.shape[1], ' independent ensembles'
             sys.__stdout__.flush()
             continue
+
+        if sampler.chain.shape[0]*sampler.chain.shape[1] > 10*args.neff:
+            sampler._chain = sampler._chain[:,1::2,:]
+            sampler._lnprob = sampler._lnprob[:,1::2]
+            thin *= 2
+
+            out = open(op.join(args.outdir, 'thin.txt'), 'w')
+            try:
+                out.write('{0:d}\n'.format(thin))
+            finally:
+                out.close()
+
+            print 'Chain has accumulated too many samples; thinning now by ', thin
+            sys.__stdout__.flush()
