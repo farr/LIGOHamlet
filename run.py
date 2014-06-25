@@ -74,7 +74,7 @@ if __name__ == '__main__':
         finally:
             inp.close()
     except:
-        thin = args.thin
+        thin = args.nthin
         print 'Could not load thin parameter, using ', thin
         sys.__stdout__.flush()
 
