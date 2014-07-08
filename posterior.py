@@ -85,22 +85,23 @@ class Posterior(object):
     def to_params(self, p):
         return np.atleast_1d(p).view(self.dtype).squeeze()
 
-    def rhof(self, p):
+    def log_rhof(self, p):
         p = self.to_params(p)
 
-        rhofs = np.zeros((self.foreground.xbins.shape[0]-1, self.foreground.ybins.shape[0]-1))
-        rhofs[self.uinds[:,0], self.uinds[:,1]] = np.exp(p['log_fg_ps']) # Only fill in the relevant bins
-        
-        return rhofs
+        log_rhofs = np.zeros((self.foreground.xbins.shape[0]-1, self.foreground.ybins.shape[0]-1))
+        log_rhofs[:,:] = np.NINF
+        log_rhofs[self.uinds[:,0], self.uinds[:,1]] = p['log_fg_ps'] # Only fill in the relevant bins
+        return log_rhofs
 
-    def rhob(self, p):
+    def log_rhob(self, p):
         p = self.to_params(p)
 
-        rhobs = np.zeros((self.foreground.xbins.shape[0]-1, self.foreground.ybins.shape[0]-1))
-        rhobs[self.uxinds, :] = np.exp(p['log_bgx_ps'].reshape((-1, 1)))
-        rhobs[:,self.uyinds] *= np.exp(p['log_bgy_ps'].reshape((1, -1)))
+        log_rhobs = np.zeros((self.foreground.xbins.shape[0]-1, self.foreground.ybins.shape[0]-1))
+        log_rhobs[:,:] = np.NINF
+        log_rhobs[self.uxinds, :] = p['log_bgx_ps'].reshape((-1, 1))
+        log_rhobs[:,self.uyinds] += p['log_bgy_ps'].reshape((1, -1))
 
-        return rhobs
+        return log_rhobs
 
     def log_prior(self, p):
         p = self.to_params(p)
@@ -137,11 +138,11 @@ class Posterior(object):
 
         ll += np.sum(self.counts*p['log_fg_ps']) + self.nfg_rem*np.log1p(-np.exp(np.logaddexp.reduce(p['log_fg_ps'])))
         
-        rhofs = self.rhof(p)
-        rhobs = self.rhob(p)
+        log_rhofs = self.log_rhof(p)
+        log_rhobs = self.log_rhob(p)
 
-        ll += np.sum(np.logaddexp(np.log(p['Rf']) + np.log(rhofs[self.xinds, self.yinds]),
-                                  np.log(p['Rb']) + np.log(rhobs[self.xinds, self.yinds])))
+        ll += np.sum(np.logaddexp(np.log(p['Rf']) + log_rhofs[self.xinds, self.yinds],
+                                  np.log(p['Rb']) + log_rhobs[self.xinds, self.yinds]))
 
         ll -= p['Rf']
         ll -= p['Rb']
@@ -172,15 +173,15 @@ class Posterior(object):
     def pfores(self, p):
         p = self.to_params(p)
 
-        rhofs = self.rhof(p)
-        rhobs = self.rhob(p)
+        rhofs = np.exp(self.log_rhof(p))
+        rhobs = np.exp(self.log_rhob(p))
 
         return p['Rf']*rhofs[self.xinds, self.yinds]/(p['Rf']*rhofs[self.xinds, self.yinds] + p['Rb']*rhobs[self.xinds, self.yinds])
 
     def pbacks(self, p):
         p = self.to_params(p)
 
-        rhofs = self.rhof(p)
-        rhobs = self.rhob(p)
+        rhofs = np.exp(self.log_rhof(p))
+        rhobs = np.exp(self.log_rhob(p))
 
         return p['Rb']*rhobs[self.xinds, self.yinds]/(p['Rf']*rhofs[self.xinds, self.yinds] + p['Rb']*rhobs[self.xinds, self.yinds])
