@@ -78,3 +78,9 @@ if __name__ == '__main__':
     triangle_plot(tchain, args.dir)
     pp.clf()
     pback_plot(tchain, logpost, args.dir)
+
+    out = open(op.join(args.dir, 'bf.dat'), 'w')
+    try:
+        out.write('# log(BF)\n{0:g}\n'.format(log_odds_signal(tchain)[0]))
+    finally:
+        out.close()
