@@ -45,23 +45,29 @@ class Posterior(object):
         dx = np.diff(self.foreground.xbins)
         dy = np.diff(self.foreground.ybins)
 
+        # alpha ~ effective number of "counts" distributed uniformly
+        # by the prior
+        alpha_counts = 1.0
+        alphax_counts = 1.0
+        alphay_counts = 1.0
+
         alphas = np.outer(dx, dy)
-        alphas *= 0.5*dx.shape[0]*dy.shape[0]/np.sum(alphas)
+        alphas *= alpha_counts/np.sum(alphas)
 
         self.alphas = alphas[self.uinds[:,0], self.uinds[:,1]]
-        self.alphas_rem = 0.5*dx.shape[0]*dy.shape[0] - np.sum(self.alphas)
+        self.alphas_rem = alpha_counts - np.sum(self.alphas)
 
         bgx_alphas = dx.copy()
-        bgx_alphas *= 0.5*dx.shape[0]/np.sum(bgx_alphas)
+        bgx_alphas *= alphax_counts/np.sum(bgx_alphas)
 
         bgy_alphas = dy.copy()
-        bgy_alphas *= 0.5*dy.shape[0]/np.sum(bgy_alphas)
+        bgy_alphas *= alphay_counts/np.sum(bgy_alphas)
 
         self.bgx_alphas = bgx_alphas[self.uxinds]
-        self.bgx_alphas_rem = 0.5*dx.shape[0] - np.sum(self.bgx_alphas)
+        self.bgx_alphas_rem = alphax_counts - np.sum(self.bgx_alphas)
 
         self.bgy_alphas = bgy_alphas[self.uyinds]
-        self.bgy_alphas_rem = 0.5*dy.shape[0] - np.sum(self.bgy_alphas)
+        self.bgy_alphas_rem = alphay_counts - np.sum(self.bgy_alphas)
         
 
     @property
