@@ -102,7 +102,7 @@ if __name__ == '__main__':
     p0[0] = rbest
     p0[1] = logpost.coincs.shape[0] - rbest
 
-    ps = np.exp(np.log(p0) + 1e-3*np.random.randn(args.nwalkers, logpost.nparams))
+    ps = p0 + 1e-3*np.random.randn(args.nwalkers, logpost.nparams)
 
     try:
         cin = bz2.BZ2File(op.join(args.outdir, 'chain.npy.bz2'), 'r')

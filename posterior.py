@@ -72,9 +72,9 @@ class Posterior(object):
     def dtype(self):
         return np.dtype([('Rf', np.float),
                          ('Rb', np.float),
-                         ('fg_ps', np.float, self.uinds.shape[0]),
-                         ('bgx_ps', np.float, self.uxinds.shape[0]),
-                         ('bgy_ps', np.float, self.uyinds.shape[0])])
+                         ('log_fg_ps', np.float, self.uinds.shape[0]),
+                         ('log_bgx_ps', np.float, self.uxinds.shape[0]),
+                         ('log_bgy_ps', np.float, self.uyinds.shape[0])])
 
     def to_params(self, p):
         return np.atleast_1d(p).view(self.dtype).squeeze()
@@ -83,7 +83,7 @@ class Posterior(object):
         p = self.to_params(p)
 
         rhofs = np.zeros((self.foreground.xbins.shape[0]-1, self.foreground.ybins.shape[0]-1))
-        rhofs[self.uinds[:,0], self.uinds[:,1]] = p['fg_ps'] # Only fill in the relevant bins
+        rhofs[self.uinds[:,0], self.uinds[:,1]] = np.exp(p['log_fg_ps']) # Only fill in the relevant bins
         
         return rhofs
 
@@ -91,8 +91,8 @@ class Posterior(object):
         p = self.to_params(p)
 
         rhobs = np.zeros((self.foreground.xbins.shape[0]-1, self.foreground.ybins.shape[0]-1))
-        rhobs[self.uxinds, :] = p['bgx_ps'].reshape((-1, 1))
-        rhobs[:,self.uyinds] *= p['bgy_ps'].reshape((1, -1))
+        rhobs[self.uxinds, :] = np.exp(p['log_bgx_ps'].reshape((-1, 1)))
+        rhobs[:,self.uyinds] *= np.exp(p['log_bgy_ps'].reshape((1, -1)))
 
         return rhobs
 
@@ -104,38 +104,32 @@ class Posterior(object):
         if p['Rb'] < 0:
             return np.NINF
 
-        if np.any(p['fg_ps'] < 0):
+        if np.logaddexp.reduce(p['log_fg_ps']) > 0.0:
             return np.NINF
-        if np.any(p['bgx_ps'] < 0):
+        if np.logaddexp.reduce(p['log_bgx_ps']) > 0.0:
             return np.NINF
-        if np.any(p['bgy_ps'] < 0):
-            return np.NINF
-
-        if np.sum(p['fg_ps']) > 1.0:
-            return np.NINF
-        if np.sum(p['bgx_ps']) > 1.0:
-            return np.NINF
-        if np.sum(p['bgy_ps']) > 1.0:
+        if np.logaddexp.reduce(p['log_bgy_ps']) > 0.0:
             return np.NINF
 
-        return np.sum((self.alphas - 1)*np.log(p['fg_ps'])) + \
-            np.sum((self.bgx_alphas - 1)*np.log(p['bgx_ps'])) + \
-            np.sum((self.bgy_alphas - 1)*np.log(p['bgy_ps'])) + \
-            (self.alphas_rem-1)*np.log1p(-np.sum(p['fg_ps'])) + \
-            (self.bgx_alphas_rem-1)*np.log1p(-np.sum(p['bgx_ps'])) + \
-            (self.bgy_alphas_rem-1)*np.log1p(-np.sum(p['bgy_ps'])) + \
-            -0.5*(np.log(p['Rf']) + np.log(p['Rb']))
+        return np.sum((self.alphas - 1)*p['log_fg_ps']) + \
+            np.sum((self.bgx_alphas - 1)*p['log_bgx_ps']) + \
+            np.sum((self.bgy_alphas - 1)*p['log_bgy_ps']) + \
+            (self.alphas_rem-1)*np.log1p(-np.exp(np.logaddexp.reduce(p['log_fg_ps']))) + \
+            (self.bgx_alphas_rem-1)*np.log1p(-np.exp(np.logaddexp.reduce(p['log_bgx_ps']))) + \
+            (self.bgy_alphas_rem-1)*np.log1p(-np.exp(np.logaddexp.reduce(p['log_bgy_ps']))) + \
+            -0.5*(np.log(p['Rf']) + np.log(p['Rb'])) + \
+            np.sum(p['log_fg_ps']) + np.sum(p['log_bgx_ps']) + np.sum(p['log_bgy_ps']) # Jacobian for logs.
 
     def log_likelihood(self, p):
         p = self.to_params(p)
 
         ll = 0.0
 
-        ll += np.sum(self.bgxcounts*np.log(p['bgx_ps'])) + self.nbgx_rem*np.log1p(-np.sum(p['bgx_ps']))
+        ll += np.sum(self.bgxcounts*p['log_bgx_ps']) + self.nbgx_rem*np.log1p(-np.exp(np.logaddexp.reduce(p['log_bgx_ps'])))
 
-        ll += np.sum(self.bgycounts*np.log(p['bgy_ps'])) + self.nbgy_rem*np.log1p(-np.sum(p['bgy_ps']))
+        ll += np.sum(self.bgycounts*p['log_bgy_ps']) + self.nbgy_rem*np.log1p(-np.exp(np.logaddexp.reduce(p['log_bgy_ps'])))
 
-        ll += np.sum(self.counts*np.log(p['fg_ps'])) + self.nfg_rem*np.log1p(-np.sum(p['fg_ps']))
+        ll += np.sum(self.counts*p['log_fg_ps']) + self.nfg_rem*np.log1p(-np.exp(np.logaddexp.reduce(p['log_fg_ps'])))
         
         rhofs = self.rhof(p)
         rhobs = self.rhob(p)
@@ -163,9 +157,9 @@ class Posterior(object):
 
         ps = self.to_params(np.zeros(self.nparams))
 
-        ps['fg_ps'] = (self.counts + self.alphas)/nf
-        ps['bgx_ps'] = (self.bgxcounts + self.bgx_alphas)/nbx
-        ps['bgy_ps'] = (self.bgycounts + self.bgy_alphas)/nby
+        ps['log_fg_ps'] = np.log((self.counts + self.alphas)/nf)
+        ps['log_bgx_ps'] = np.log((self.bgxcounts + self.bgx_alphas)/nbx)
+        ps['log_bgy_ps'] = np.log((self.bgycounts + self.bgy_alphas)/nby)
 
         return ps.reshape((1,)).view(float).reshape((-1,))
 
