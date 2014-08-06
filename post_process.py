@@ -27,20 +27,14 @@ def pback_plot(chain, logpost, outdir):
         pbacks.append(logpost.pbacks(p))
     pbacks = np.array(pbacks)
 
-    median_pback = np.percentile(pbacks, 50.0, axis=0)
-    low_pback = np.percentile(pbacks, 31.8, axis=0)
-    high_pback = np.percentile(pbacks, 68.2, axis=0)
-
-    dplow = median_pback - low_pback
-    dphigh = high_pback - median_pback
+    mean_pback = np.mean(pbacks, axis=0)
+    sigma_pback = np.std(pbacks, axis=0)
 
     rhos = np.sqrt(np.sum(logpost.coincs*logpost.coincs, axis=1))
 
-    pp.errorbar(rhos, median_pback, yerr=np.array([dplow, dphigh]), fmt='.', color='k')
+    pp.errorbar(rhos, mean_pback, yerr=sigma_pback, fmt='.', color='k')
 
-    pp.axis(ymax=2, ymin=np.min(low_pback)/2.0)
-
-    pp.yscale('log')
+    pp.yscale('log', nonposy='clip')
 
     pp.xlabel(r'$\rho$')
     pp.ylabel(r'$p(\mathrm{background})$')
