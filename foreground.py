@@ -23,9 +23,9 @@ def draw_normalised_snrs():
     pfac2 = pfac*pfac
     cfac2 = cfac*cfac
     
-    fpl, fcl = lal.ComputeDetAMResponse(lal.lalCachedDetectors[LLO_index].response,
+    fpl, fcl = lal.ComputeDetAMResponse(lal.CachedDetectors[LLO_index].response,
                                         ra, dec, psi, gmst)
-    fph, fch = lal.ComputeDetAMResponse(lal.lalCachedDetectors[LHO_index].response,
+    fph, fch = lal.ComputeDetAMResponse(lal.CachedDetectors[LHO_index].response,
                                         ra, dec, psi, gmst)
 
     return np.sqrt(fph*fph*pfac2 + fch*fch*cfac2), np.sqrt(fpl*fpl*pfac2 + fcl*fcl*cfac2)
