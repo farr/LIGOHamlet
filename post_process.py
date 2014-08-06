@@ -87,8 +87,11 @@ if __name__ == '__main__':
     logpost = pos.Posterior(oldlogpost.coincs, oldlogpost.bgs, oldlogpost.snr_min, foreground=oldlogpost.foreground)
 
     triangle_plot(tchain, args.dir)
+
     pp.clf()
     pback_plot(tchain, logpost, args.dir)
+
+    pp.clf()
     pback_dist_plot(tchain, logpost, args.dir)
 
     out = open(op.join(args.dir, 'bf.dat'), 'w')
