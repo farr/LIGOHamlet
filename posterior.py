@@ -172,15 +172,15 @@ class Posterior(object):
         # Correct for zeros in counts
         sel = self.counts == 0
         if np.any(sel):
-            p['log_fg_ps'][sel] = sp.psi(self.alphas[sel])
+            ps['log_fg_ps'][sel] = sp.psi(self.alphas[sel])
 
         sel = self.bgxcounts == 0
         if np.any(sel):
-            p['log_bgx_ps'][sel] = sp.psi(self.bgx_alphas[sel])
+            ps['log_bgx_ps'][sel] = sp.psi(self.bgx_alphas[sel])
 
         sel = self.bgycounts == 0
         if np.any(sel):
-            p['log_bgy_ps'][sel] = sp.psi(self.bgy_alphas[sel])
+            ps['log_bgy_ps'][sel] = sp.psi(self.bgy_alphas[sel])
 
         return ps.reshape((1,)).view(float).reshape((-1,))
 
