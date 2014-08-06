@@ -42,6 +42,23 @@ def pback_plot(chain, logpost, outdir):
     pp.savefig(op.join(outdir, 'pbacks.pdf'))
     pp.savefig(op.join(outdir, 'pbacks.png'))
 
+def pback_dist_plot(chain, logpost, outdir):
+    log_pbacks = []
+    for p in chain.reshape((-1, chain.shape[2])):
+        log_pbacks.append(logpost.log_pbacks(p))
+    log_pbacks = np.array(log_pbacks)
+
+    log_pbacks /= np.log(10.0)
+
+    for lpb in log_pbacks:
+        pu.plot_histogram_posterior(lpb, normed=True, histtype='step')
+
+    pp.xlabel(r'$\log_{10}\left(p_\mathrm{back}\right)$')
+    pp.ylabel(r'$p\left(\log_{10}\left(p_\mathrm{back}\right)\right)$')
+
+    pp.savefig(op.join(outdir, 'pback-dist.pdf'))
+    pp.savefig(op.join(outdir, 'pback-dist.png'))
+
 def log_odds_signal(tchain, rhigh=100.0):
     kde = ss.gaussian_kde(np.sqrt(tchain[:,:,0].flatten()/rhigh))
 
@@ -72,6 +89,7 @@ if __name__ == '__main__':
     triangle_plot(tchain, args.dir)
     pp.clf()
     pback_plot(tchain, logpost, args.dir)
+    pback_dist_plot(tchain, logpost, args.dir)
 
     out = open(op.join(args.dir, 'bf.dat'), 'w')
     try:
