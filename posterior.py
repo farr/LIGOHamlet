@@ -184,18 +184,26 @@ class Posterior(object):
 
         return ps.reshape((1,)).view(float).reshape((-1,))
 
-    def pfores(self, p):
+    def log_pfores(self, p):
         p = self.to_params(p)
 
-        rhofs = np.exp(self.log_rhof(p))
-        rhobs = np.exp(self.log_rhob(p))
+        log_rhofs = self.log_rhof(p)[self.xinds, self.yinds]
+        log_rhobs = self.log_rhob(p)[self.xinds, self.yinds]
 
-        return p['Rf']*rhofs[self.xinds, self.yinds]/(p['Rf']*rhofs[self.xinds, self.yinds] + p['Rb']*rhobs[self.xinds, self.yinds])
+        return np.log(p['Rf']) + log_rhofs - np.logaddexp(np.log(p['Rf']) + log_rhofs,
+                                                          np.log(p['Rb']) + log_rhobs)
+
+    def pfores(self, p):
+        return np.exp(self.log_pfores(p))
+
+    def log_pbacks(self, p):
+        p = self.to_params(p)
+
+        log_rhofs = self.log_rhof(p)[self.xinds, self.yinds]
+        log_rhobs = self.log_rhob(p)[self.xinds, self.yinds]
+
+        return np.log(p['Rb']) + log_rhobs - np.logaddexp(np.log(p['Rf']) + log_rhofs,
+                                                          np.log(p['Rb']) + log_rhobs)
 
     def pbacks(self, p):
-        p = self.to_params(p)
-
-        rhofs = np.exp(self.log_rhof(p))
-        rhobs = np.exp(self.log_rhob(p))
-
-        return p['Rb']*rhobs[self.xinds, self.yinds]/(p['Rf']*rhofs[self.xinds, self.yinds] + p['Rb']*rhobs[self.xinds, self.yinds])
+        return np.exp(self.log_pbacks(p))
