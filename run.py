@@ -94,6 +94,10 @@ if __name__ == '__main__':
     print 'Saved posterior to pickle.'
     sys.__stdout__.flush()
 
+    if args.nwalkers < 4*logpost.nparams:
+        args.nwalkers = 4*logpost.nparams
+        print 'Increased number of walkers to ', args.nwalkers
+
     sampler = emcee.EnsembleSampler(args.nwalkers, logpost.nparams, logpost)
 
     p0 = logpost.params_guess()
