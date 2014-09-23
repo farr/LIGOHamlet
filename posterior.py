@@ -182,6 +182,15 @@ class Posterior(object):
         if np.any(sel):
             ps['log_bgy_ps'][sel] = sp.psi(self.bgy_alphas[sel])
 
+        log_rhof = self.log_rhof(ps)[self.xinds, self.yinds]
+        log_rhob = self.log_rhob(ps)[self.xinds, self.yinds]
+
+        log_Rf = np.logaddexp.reduce(log_rhof - np.logaddexp(log_rhof, log_rhob))
+        log_Rb = np.logaddexp.reduce(log_rhob - np.logaddexp(log_rhof, log_rhob))
+
+        ps['Rf'] = np.exp(log_Rf)
+        ps['Rb'] = np.exp(log_Rb)
+
         return ps.reshape((1,)).view(float).reshape((-1,))
 
     def log_pfores(self, p):
