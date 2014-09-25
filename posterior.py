@@ -233,7 +233,10 @@ class SimplifiedPosterior(Posterior):
         self.log_bgx_ps = np.log(self.bgx_alphas + self.bgxcounts) - log_bgxdenom
         self.log_bgy_ps = np.log(self.bgy_alphas + self.bgycounts) - log_bgydenom
 
-        print self.log_fg_ps, self.log_bgx_ps, self.log_bgy_ps
+        p0 = self.params_guess()
+        self.log_coinc_fg_ps = self.log_rhof(p0)[self.xinds, self.yinds]
+        self.log_coinc_bg_ps = self.log_rhob(p0)[self.xinds, self.yinds]
+        
 
         if np.any(self.counts < 10):
             warn.warn(AccuracyWarning('foreground may be inaccurately estimated---use Posterior'))
@@ -269,3 +272,17 @@ class SimplifiedPosterior(Posterior):
         p = super(SimplifiedPosterior, self).params_guess()
 
         return p[:2]
+
+    def log_prior(self, p):
+        if p[0] < 0:
+            return np.NINF
+        if p[1] < 0:
+            return np.NINF
+
+        return -0.5*(np.log(p[0]) + np.log(p[1]))
+
+    def log_likelihood(self, p):
+        log_coinc_ps = np.logaddexp(np.log(p[0]) + self.log_coinc_fg_ps,
+                                    np.log(p[1]) + self.log_coinc_bg_ps)
+        
+        return np.sum(log_coinc_ps) - p[0] - p[1]
