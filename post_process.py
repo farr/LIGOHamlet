@@ -84,7 +84,7 @@ if __name__ == '__main__':
         oldlogpost = pickle.load(inp)
     finally:
         inp.close()
-    logpost = pos.Posterior(oldlogpost.coincs, oldlogpost.bgs, oldlogpost.snr_min, foreground=oldlogpost.foreground)
+    logpost = pos.SimplifiedPosterior(oldlogpost.coincs, oldlogpost.bgs, oldlogpost.snr_min, foreground=oldlogpost.foreground)
 
     triangle_plot(tchain, args.dir)
 
