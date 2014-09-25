@@ -2,6 +2,7 @@ import foreground as fg
 import numpy as np
 import scipy.optimize as so
 import scipy.special as sp
+import warnings as warn
 
 class Posterior(object):
     def __init__(self, coincs, bgs, snr_min, N=10000000, foreground=None):
@@ -216,3 +217,55 @@ class Posterior(object):
 
     def pbacks(self, p):
         return np.exp(self.log_pbacks(p))
+
+class AccuracyWarning(Warning):
+    pass
+
+class SimplifiedPosterior(Posterior):
+    def __init__(self, *args, **kwargs):
+        super(SimplifiedPosterior, self).__init__(*args, **kwargs)
+
+        log_fgdenom = np.log(np.sum(self.counts) + self.nfg_rem + np.sum(self.alphas) + self.alphas_rem)
+        log_bgxdenom = np.log(np.sum(self.bgxcounts) + self.nbgx_rem + np.sum(self.bgx_alphas) + self.bgx_alphas_rem)
+        log_bgydenom = np.log(np.sum(self.bgycounts) + self.nbgy_rem + np.sum(self.bgy_alphas) + self.bgy_alphas_rem)
+
+        self.log_fg_ps = np.log(self.alphas + self.counts) - log_fgdenom
+        self.log_bgx_ps = np.log(self.bgx_alphas + self.bgxcounts) - log_bgxdenom
+        self.log_bgy_ps = np.log(self.bgy_alphas + self.bgycounts) - log_bgydenom
+
+        print self.log_fg_ps, self.log_bgx_ps, self.log_bgy_ps
+
+        if np.any(self.counts < 10):
+            warn.warn(AccuracyWarning('foreground may be inaccurately estimated---use Posterior'))
+        if np.any(self.bgxcounts < 10):
+            warn.warn(AccuracyWarning('x-background may be inaccurately estimated---use Posterior'))
+
+        if np.any(self.bgycounts < 10):
+            warn.warn(AccuracyWarning('y-background may be inaccurately estimated---use Posterior'))
+
+        if self.uxinds.shape[0] < self.xinds.shape[0]:
+            warn.warn(AccuracyWarning('more than one coinc per x-bin'))
+        if self.uyinds.shape[0] < self.yinds.shape[0]:
+            warn.warn(AccuracyWarning('more than one coinc per y-bin'))
+
+    @property
+    def nparams(self):
+        return 2
+
+    def to_params(self, p):
+        pp = np.zeros(super(SimplifiedPosterior, self).nparams)
+
+        pp[:2] = p
+
+        pp = super(SimplifiedPosterior, self).to_params(pp)
+
+        pp['log_fg_ps'] = self.log_fg_ps
+        pp['log_bgx_ps'] = self.log_bgx_ps
+        pp['log_bgy_ps'] = self.log_bgy_ps
+
+        return pp
+
+    def params_guess(self):
+        p = super(SimplifiedPosterior, self).params_guess()
+
+        return p[:2]

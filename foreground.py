@@ -109,6 +109,8 @@ class Foreground(object):
     def __init__(self, snr_thresh, N):
         xbins, ybins, counts = snr_histogram(snr_thresh, N)
 
+        self.snr_thresh = snr_thresh
+
         self.xbins = xbins
         self.ybins = ybins
         self.counts = counts

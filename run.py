@@ -12,22 +12,6 @@ import plotutils.autocorr as ac
 import posterior as pos
 import sys
 
-def find_best_rate(p0, logpost):
-    Nmax = logpost.coincs.shape[0]
-
-    Rs = np.arange(0.5, Nmax+0.5)
-
-    def f(r):
-        p = p0.copy()
-        p[0] = r
-        p[1] = Nmax-r
-        return logpost(p)
-
-    fs = np.array([f(r) for r in Rs])
-    imax = np.argmax(fs)
-
-    return Rs[imax]
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
@@ -61,7 +45,7 @@ if __name__ == '__main__':
         finally:
             inp.close()
     except:
-        logpost = pos.Posterior(coincs, bgs, args.snr_min, N=args.nfore)
+        logpost = pos.SimplifiedPosterior(coincs, bgs, args.snr_min, N=args.nfore)
         print 'Generated new posterior'
         sys.__stdout__.flush()
 
@@ -101,10 +85,10 @@ if __name__ == '__main__':
     sampler = emcee.EnsembleSampler(args.nwalkers, logpost.nparams, logpost)
 
     p0 = logpost.params_guess()
-
-    rbest = find_best_rate(p0, logpost)
-    p0[0] = rbest
-    p0[1] = logpost.coincs.shape[0] - rbest
+    if p0[0] < 5e-3:
+        p0[0] = 5e-3
+    if p0[1] < 5e-3:
+        p0[1] = 5e-3
 
     ps = p0 + 1e-3*np.random.randn(args.nwalkers, logpost.nparams)
 
