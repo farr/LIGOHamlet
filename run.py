@@ -20,7 +20,7 @@ if __name__ == '__main__':
     parser.add_argument('--trigs2', required=True, help='triggers file for IFO 2')
 
     parser.add_argument('--snr-min', default=5.5, type=float, help='threshold SNR')
-    parser.add_argument('--neff', default=10000, type=int, help='number of independent samples')
+    parser.add_argument('--neff', default=16384, type=int, help='number of independent samples')
     parser.add_argument('--outdir', default='.', help='output directory')
     parser.add_argument('--nfore', default=10000000, type=int, help='number of foreground draws')
     parser.add_argument('--nwalkers', default=128, type=int, help='number of walkers')
