@@ -257,8 +257,11 @@ class SimplifiedPosterior(Posterior):
 
     def to_params(self, p):
         pp = np.zeros(super(SimplifiedPosterior, self).nparams)
+	p = np.atleast_1d(p)
+	p = p.view(float)
 
-        pp[:2] = p
+        pp[0] = p[0]
+	pp[1] = p[1]
 
         pp = super(SimplifiedPosterior, self).to_params(pp)
 
